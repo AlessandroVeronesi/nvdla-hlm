@@ -50,7 +50,7 @@ class nvdla:
 
         return (B, K, H_, W_)
 
-    def convolve(self, Fmap, Kmap, stride=(1,1), padding=(0,0), dilation=(1,1)):
+    def convolve(self, Fmap, Kmap, Bias, stride=(1,1), padding=(0,0), dilation=(1,1)):
 
         (B, C, H, W) = Fmap.shape
         (K,C_, R, S) = Kmap.shape
@@ -98,3 +98,9 @@ class nvdla:
                                 ow   = w*stride_w - padding_w +s
 
                                 psums[b, :, oh, ow] += np.matmul(datV[:,np.newaxis], wtV).flatten()
+        
+        # Bias Addition
+        psums += Bias[None, :, None, None]
+
+        # Exits
+        return psums
