@@ -3,7 +3,7 @@ import numpy as np
 import yaml
 
 
-class nvdla:
+class core:
     def __init__(self, config):
         self.config  = config
 
@@ -14,7 +14,7 @@ class nvdla:
             self.atomick   = specs['cmac']['atomic-k']
             self.batchsize = specs['cmac']['batch-size']
         
-    def getHyperParams(stride=(1,1), padding=(0,0), dilation=(1,1)):
+    def getHyperParams(self, stride=(1,1), padding=(0,0), dilation=(1,1)):
         if isinstance(padding, tuple):
             padding_h, padding_w = padding
         else:
@@ -79,25 +79,37 @@ class nvdla:
             Cend = min(C, c + self.atomicc)
 
             # Block OP
-            for r in range(R):
-                for s in range(S):
+            for r in range(0,R):
+                for s in range(0,S):
 
                     # Stripe OP
-                    for h in range(0, H, stride_h):
-                        for w in range(0, W, stride_w):
+                    oh = 0
+
+                    for h in range(0, (H-1), stride_h):
+                        ow = 0
+
+                        for w in range(0, (W-1), stride_w):
 
                             # Atomic OP
                             for b in range(B):
 
                                 # Vec Loading
                                 datV = Fmap[b, c:Cend, h, w]
-                                wtV  = Kmap[:, c:Cend, r, s]
+                                wtV  = Kmap[:, c:Cend, r, s].transpose()
 
-                                # Output Coordinates
-                                oh   = h*stride_h - padding_h +r
-                                ow   = w*stride_w - padding_w +s
+                                # print(f'Dat({b},{c},{h},{w}) = {datV[np.newaxis,:].shape}')
+                                # print(f'Wt(:,{c},{r},{s})  = {wtV.shape}')
+                                print(f'--------------------')
+                                print(f'w: {w}/{W}')
+                                print(f'h: {h}/{H}')
+                                print(f'Psums = ({oh},{ow} / {H_},{W_})')
 
-                                psums[b, :, oh, ow] += np.matmul(datV[:,np.newaxis], wtV).flatten()
+                                psums[b, :, oh, ow] += np.matmul(datV[np.newaxis,:], wtV).flatten()
+
+                            # Output Coordinates Update
+                            ow += 1
+                        oh += 1
+
         
         # Bias Addition
         psums += Bias[None, :, None, None]

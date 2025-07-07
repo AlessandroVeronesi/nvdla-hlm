@@ -9,7 +9,7 @@ import torch
 from random import randrange, randint
 from datetime import datetime
 
-sys.path.append(os.path.join(os.path.abspath(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'src'))
 
 import nvdla
 
@@ -70,9 +70,13 @@ def testroutine(nvdla, dbgcfg, testnum, verbose=False):
     MAXK = -1
     with open(dbgcfg, 'r') as f:
         cfgdict = yaml.load(f, yaml.SafeLoader)
-        MAXB    =      cfgdict['cmac']['batch-size']
-        MAXC    = 4 *  cfgdict['cmac']['atomic-c']
-        MAXK    = 32 * cfgdict['cmac']['atomic-k']
+        # MAXB    =      cfgdict['cmac']['batch-size']
+        # MAXC    = 4 *  cfgdict['cmac']['atomic-c']
+        # MAXK    = 32 * cfgdict['cmac']['atomic-k']
+        MAXB    = cfgdict['cmac']['batch-size']
+        MAXC    = cfgdict['cmac']['atomic-c']
+        MAXK    = cfgdict['cmac']['atomic-k']
+
 
     for testit in range(testnum):
 
@@ -81,7 +85,6 @@ def testroutine(nvdla, dbgcfg, testnum, verbose=False):
             stride   = ((randval(MAXSTRIDE-1)   +1), (randval(MAXSTRIDE-1)   +1))
             padding  = ((randval(MAXPADDING)),       (randval(MAXPADDING))      )
             dilation = ((randval(MAXDILATION-1) +1), (randval(MAXDILATION-1) +1))
-
             B = randval(MAXB-1) +1
             K = randval(MAXK-1) +1
             C = randval(MAXC-1) +1
@@ -97,9 +100,26 @@ def testroutine(nvdla, dbgcfg, testnum, verbose=False):
             H = (H_-1)*stride[0] -2*padding[0] +R_
             W = (W_-1)*stride[1] -2*padding[1] +S_
 
+            ##################
+
+            stride = (1,1)
+            padding = (0,0)
+            dilation = (1,1)
+
+            B = 1
+            K = randval(MAXK-1) +1
+            C = randval(MAXC-1) +1
+
+            R = 2
+            S = 2
+
+            H = 3
+            W = 3
+
+            ##################
+
             if((H_>0) and (W_>0) and (H>0) and (W>0) and (R_>0) and (S_>0)):
                 input_gen_exit = True
-
 
         Fmap = np.random.uniform(-10,10, (B,C,H,W)).astype(np.float32)
         Kmap = np.random.uniform(-10,10, (K,C,R,S)).astype(np.float32)
@@ -113,7 +133,7 @@ def testroutine(nvdla, dbgcfg, testnum, verbose=False):
         print(f'-I: Padding  = {padding}')
         print(f'-I: Dilation = {dilation}')
 
-        print(input("Waiting user input... "))
+        # input('...')
 
         if verbose:
             print('-I: inputs tensor is:')
@@ -126,7 +146,7 @@ def testroutine(nvdla, dbgcfg, testnum, verbose=False):
         golden = conv(Fmap, Kmap, Bias, stride, padding, dilation)
 
         start  = datetime.now()
-        dut    = nvdla.convolve(nvdla, Fmap, Kmap, Bias, stride, padding, dilation)
+        dut    = nvdla.convolve(Fmap, Kmap, Bias, stride, padding, dilation)
         stop   = datetime.now()
 
         if((golden.shape == dut.shape) and np.allclose(golden, dut, rtol=args.threshold)):
@@ -171,7 +191,7 @@ if __name__ == '__main__':
     ##############################
     # ARGS
 
-    dftcfg = os.path.join(os.path.abspath(__file__), '..', 'specs', 'debug.yaml')
+    dftcfg = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'specs', 'debug.yaml')
 
     parser = argparse.ArgumentParser()
 
@@ -203,7 +223,7 @@ if __name__ == '__main__':
     ##############################
     # Init NVDLA
 
-    nvdla = nvdla.nvdla(dbgcfg)
+    nvdla = nvdla.core(dbgcfg)
 
     ##############################
     # Testing
