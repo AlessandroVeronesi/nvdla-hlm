@@ -1,0 +1,40 @@
+
+name: "debug16"
+dat-type: "int8"
+wt-type: "int8"
+truncate: False
+# sim-timeout: 200000 # Timeout for BenchMark #1
+sim-timeout: 0
+host-system:
+  datmem-size: 268435456
+  wtmem-size:  603979776
+  sdpmem-size: 8388608
+  outmem-size: 268435456
+inject:
+  datapath: True
+  ctrlpath: True
+cbuf:
+  datbuf:
+    num-banks: 128
+    bank-depth: 1024
+    wordsize: 32
+  wtbuf:
+    num-banks: 128
+    bank-depth: 1024
+    wordsize: 32
+cmac:
+  batch-size: 6
+  atomic-c: 4
+  atomic-k: 16
+  mac-pipelined: True
+cacc:
+  extra-bits: 6
+  num-banks: 128
+  bank-depth: 1024
+  wordsize: 136
+sdp:
+  num-stages: 2
+  alu-pipelined: True
+axi-dbb:
+  wordsize: 512
+  latency: 1200

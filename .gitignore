@@ -1,0 +1,33 @@
+
+# Temporary Files Extensions
+*~
+*.swp
+*.swo
+*.raw2
+*.txn.raw
+*.jou
+*.x
+*.so
+*.log
+*.tar.gz
+*.pth
+*.out
+*.txt
+*.spyproject
+*ninja*
+!*CMakeLists.txt
+
+# Temporary Directories
+*_
+*temp
+*data
+*old
+build
+outdir
+*obj_dir
+
+# Mac
+.DS_Store
+
+# VS code
+.vscode
